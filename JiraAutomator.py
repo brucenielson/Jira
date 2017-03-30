@@ -146,7 +146,7 @@ jira = connect_jira('https://jira.youngliving.com/', user, password)
 
 
 # Get list of cards read to move to ready to test
-review_complete = jira.search_issues('project = CSI AND status = "Review Complete" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025) ) ORDER BY key ASC, summary ASC', maxResults=250)
+review_complete = jira.search_issues('project = CSI AND status = "Review Complete" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025))  ORDER BY key ASC, summary ASC', maxResults=250)
 
 # Move each card to Ready for Test and put at top of column
 move_to_ready_for_test(jira, review_complete)
