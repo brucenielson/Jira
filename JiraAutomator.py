@@ -1,3 +1,6 @@
+# https://mborgerson.com/creating-an-executable-from-a-python-script
+# pyinstaller JiraAutomator.py
+
 from jira import JIRA
 import logging
 import getpass

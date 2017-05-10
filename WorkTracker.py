@@ -1,3 +1,5 @@
+# https://mborgerson.com/creating-an-executable-from-a-python-script
+# pyinstaller WorkTracker.py
 from jira import JIRA
 import logging
 import getpass
@@ -71,11 +73,11 @@ password = getpass.getpass(prompt='Password: ')
 jira = connect_jira('https://jira.youngliving.com/', user, password)
 
 current_sprint, start = get_current_sprint(jira)
-user = 'kcrossman'
 issues = jira.search_issues("project = CSI AND sprint = '" + current_sprint + "' AND assignee = '" + user + "'", maxResults=250)
 print_issues(issues, start)
 
 
+raw_input("Press Enter to continue...")
 
 
 
