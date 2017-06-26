@@ -72,6 +72,7 @@ password = getpass.getpass(prompt='Password: ')
 # Login to Jira
 jira = connect_jira('https://jira.youngliving.com/', user, password)
 
+#user = "kcrossman"
 current_sprint, start = get_current_sprint(jira)
 issues = jira.search_issues("project = CSI AND sprint = '" + current_sprint + "' AND assignee = '" + user + "'", maxResults=250)
 print_issues(issues, start)
