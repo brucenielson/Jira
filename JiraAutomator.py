@@ -1,5 +1,7 @@
 # https://mborgerson.com/creating-an-executable-from-a-python-script
 # pyinstaller JiraAutomator.py
+# C:\Users\BNielson\Anaconda2\envs\Jira\Scripts\pyinstaller JiraAutomator.py
+
 
 from jira import JIRA
 import logging
@@ -99,7 +101,7 @@ def unblock_cards(jira, list):
                 # Is this link now Ready for Test or Done, if so, it won't block this card any more
                 linked_issue = jira.issue(link.inwardIssue.key)
                 status = linked_issue.fields.status.name
-                if not (status == 'Ready For Test' or status == 'Done'):
+                if not (status == 'Ready For Test' or status == 'Done' or status == "Approved by QA"):
                     is_unblocked = False
                     break
         # Did we find any links that were not Ready for Test or Done? If not, remove flag
@@ -130,7 +132,7 @@ def flag_blocked_cards(jira):
                     # Is this link NOT Ready for Test or Done, if so, it will block this card
                     linked_issue = jira.issue(link.inwardIssue.key)
                     status = linked_issue.fields.status.name
-                    if not (status == 'Ready For Test' or status == 'Done'):
+                    if not (status == 'Ready For Test' or status == 'Done' or status == "Approved by QA"):
                         add_block_flag(card)
                         #jira.rank(bottom_card.key, card.key)
                         print 'Card ' + str(card.key) + ' has been blocked.'
