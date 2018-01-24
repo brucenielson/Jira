@@ -1,0 +1,1 @@
+C:\ProgramData\Anaconda2\Scripts\activate root

@@ -33,7 +33,7 @@ def get_current_sprint(jira):
     boards = jira.boards()
     board = [b for b in boards if b.name == "CSI PM Board"][0]
     sprints = jira.sprints(board.id, extended=True)
-    current_sprint = [s for s in sprints if s.state == 'ACTIVE' and s.name.startswith('CSI')][0]
+    current_sprint = [s for s in sprints if s.state == 'ACTIVE' and (s.name.startswith('CSI') or s.name.startswith('Baseline'))][0]
     name = current_sprint.name
     start = current_sprint.startDate
     start_date = datetime.strptime(start, '%d/%b/%y %I:%M %p').date()

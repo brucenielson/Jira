@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['JiraAutomator.py'],
-             pathex=['C:\\Users\\BNielson\\Google Drive\\My Files\\Python Projects\\Jira'],
+             pathex=['C:\\Users\\Bruce Nielson\\Google Drive\\My Files\\Python Projects\\Jira'],
              binaries=[],
              datas=[],
              hiddenimports=[],

@@ -5,6 +5,8 @@ import getpass
 import os
 import time
 from collections import defaultdict
+from datetime import datetime
+
 # from importlib import reload
 
 #os.path.dirname(os.path.realpath(__file__))
@@ -60,6 +62,18 @@ def make_priority_list(jira, list):
     return issue_count.items()
 
 
+def get_current_sprint(jira):
+    boards = jira.boards()
+    board = [b for b in boards if b.name == "CSI PM Board"][0]
+    sprints = jira.sprints(board.id, extended=True)
+    current_sprint = [s for s in sprints if s.state == 'ACTIVE' and (s.name.startswith('CSI') or s.name.startswith('Baseline'))][0]
+    name = current_sprint.name
+    start = current_sprint.startDate
+    start_date = datetime.strptime(start, '%d/%b/%y %I:%M %p').date()
+    print("Current Sprint: " + name + " -- Starting: " + str(start_date))
+
+    return name, start_date
+
 
 
 # Main Program Flow
@@ -71,8 +85,11 @@ password = getpass.getpass(prompt='Password: ')
 # Login to Jira
 jira = connect_jira('https://jira.youngliving.com/', user, password)
 
+# Get current sprint
+current_sprint, start = get_current_sprint(jira)
+
 # Check all links the moved cards blocked and see if any can be unblocked
-blocked_list = jira.search_issues('project = CSI AND Flagged = Impediment ORDER BY key ASC', maxResults=250)
+blocked_list = jira.search_issues('project = CSI AND Flagged = Impediment and sprint = "' + current_sprint + '" ORDER BY key ASC', maxResults=250)
 blocked_by_list = make_priority_list(jira, blocked_list)
 # Sort count in the tuple
 blocked_by_list.sort(key=lambda tup: tup[1], reverse=True)  # sorts in place

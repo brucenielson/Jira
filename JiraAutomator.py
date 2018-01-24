@@ -13,6 +13,7 @@ import time
 filename=os.getcwd()+'\\jira.log'
 logging.basicConfig(filename=filename,level=logging.INFO)
 logging.info("Starting Jira Automation Run on " + str(time.strftime("%c")))
+final_status = "Deployed to Dev"
 
 def connect_jira(jira_server, jira_user, jira_password):
     '''
@@ -31,40 +32,40 @@ def connect_jira(jira_server, jira_user, jira_password):
         return None
 
 
-def get_top_card(jira):
+def get_top_card(jira, status):
     # Get top card
-    rank_order = jira.search_issues('project = CSI AND status = "Ready For Test" ORDER BY cf[10000] ASC')
+    rank_order = jira.search_issues('project = CSI AND status = "'+status+'" ORDER BY cf[10000] ASC')
     return rank_order[0]
 
 
-def get_bottom_card(jira):
+def get_bottom_card(jira, status):
     # Get top card
-    rank_order = jira.search_issues('project = CSI AND status = "Ready For Test" ORDER BY cf[10000] ASC')
+    rank_order = jira.search_issues('project = CSI AND status = "'+status+'" ORDER BY cf[10000] ASC')
     return rank_order[len(rank_order)-1]
 
 
 
-def move_to_ready_for_test(jira, list):
+def move_to_status(jira, list, status):
 
     if list == []:
         return
 
-    top_card = get_top_card(jira)
+    top_card = get_top_card(jira, status)
 
-    # Get Ready For Test ID
+    # Get Status ID
     trans_id = 0
 
     card = list[0]
     transitions = jira.transitions(card)
     for t in transitions:
-        if (t['name'] == "Ready For Test"):
+        if (t['name'] == status):
             trans_id = t['id']
             break
 
     for card in list:
         jira.transition_issue(card, trans_id)
-        logging.info("Moved: " + str(card) + " to Ready for Test")
-        print "Moved: " + str(card) + " to Ready for Test"
+        logging.info("Moved: " + str(card) + " to " + status)
+        print "Moved: " + str(card) + " to " + status
         # Rank to top of column
         jira.rank(card.key, top_card.key)
 
@@ -84,7 +85,7 @@ def unblock_cards(jira, list):
     if list == []:
         return
 
-    top_card = get_top_card(jira)
+    top_card = get_top_card(jira, final_status)
     # Check each item on the block list and see if its unblocked
     for card in list:
         links = card.fields.issuelinks
@@ -101,7 +102,7 @@ def unblock_cards(jira, list):
                 # Is this link now Ready for Test or Done, if so, it won't block this card any more
                 linked_issue = jira.issue(link.inwardIssue.key)
                 status = linked_issue.fields.status.name
-                if not (status == 'Ready For Test' or status == 'Done' or status == "Approved by QA"):
+                if not (status == 'Ready For Test' or status == final_status or status == 'Done' or status == "Approved by QA"):
                     is_unblocked = False
                     break
         # Did we find any links that were not Ready for Test or Done? If not, remove flag
@@ -115,10 +116,10 @@ def unblock_cards(jira, list):
 
 def flag_blocked_cards(jira):
     review_complete = jira.search_issues(
-        'project = CSI AND status = "Ready For Test" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446) ) and Flagged = null ORDER BY key ASC, summary ASC',
+        'project = CSI AND status = "'+final_status+'" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446) ) and Flagged = null ORDER BY key ASC, summary ASC',
         maxResults=250)
 
-    bottom_card = get_bottom_card(jira)
+    bottom_card = get_bottom_card(jira, final_status)
     # Check each item on the block list and see if its unblocked
     for card in review_complete:
         links = card.fields.issuelinks
@@ -132,7 +133,7 @@ def flag_blocked_cards(jira):
                     # Is this link NOT Ready for Test or Done, if so, it will block this card
                     linked_issue = jira.issue(link.inwardIssue.key)
                     status = linked_issue.fields.status.name
-                    if not (status == 'Ready For Test' or status == 'Done' or status == "Approved by QA"):
+                    if not (status == 'Ready For Test' or status == final_status or status == 'Done' or status == "Approved by QA"):
                         add_block_flag(card)
                         #jira.rank(bottom_card.key, card.key)
                         print 'Card ' + str(card.key) + ' has been blocked.'
@@ -151,10 +152,10 @@ jira = connect_jira('https://jira.youngliving.com/', user, password)
 
 
 # Get list of cards read to move to ready to test
-review_complete = jira.search_issues('project = CSI AND status = "Review Complete" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025))  ORDER BY key ASC, summary ASC', maxResults=250)
+review_complete = jira.search_issues('project = CSI AND status = "Review Complete" ORDER BY key ASC, summary ASC', maxResults=250) #AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025))
 
 # Move each card to Ready for Test and put at top of column
-move_to_ready_for_test(jira, review_complete)
+move_to_status(jira, review_complete, final_status)
 
 # Check all links the moved cards blocked and see if any can be unblocked
 blocked_list = jira.search_issues('project = CSI AND Flagged = Impediment ORDER BY key ASC', maxResults=250)
