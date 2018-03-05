@@ -13,7 +13,8 @@ import time
 filename=os.getcwd()+'\\jira.log'
 logging.basicConfig(filename=filename,level=logging.INFO)
 logging.info("Starting Jira Automation Run on " + str(time.strftime("%c")))
-final_status = "Deployed to Dev"
+#final_status = "Deployed to Dev"
+final_status = "Ready to Deploy"
 
 def connect_jira(jira_server, jira_user, jira_password):
     '''
