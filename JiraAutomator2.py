@@ -13,8 +13,9 @@ import time
 filename=os.getcwd()+'\\jira.log'
 logging.basicConfig(filename=filename,level=logging.INFO)
 logging.info("Starting Jira Automation Run on " + str(time.strftime("%c")))
+#final_status = "Deployed to Dev"
 final_status = "Deployed to Dev"
-#final_status = "Ready to Deploy"
+final_transition = "Deployed"
 
 def connect_jira(jira_server, jira_user, jira_password):
     '''
@@ -35,18 +36,21 @@ def connect_jira(jira_server, jira_user, jira_password):
 
 def get_top_card(jira, status):
     # Get top card
-    rank_order = jira.search_issues('project = CSI AND status = "'+status+'" ORDER BY cf[10000] ASC')
-    return rank_order[0]
+    rank_order = jira.search_issues('project = SVC AND status = "'+status+'" ORDER BY cf[10000] ASC')
+    if len(rank_order) == 0:
+        return None
+    else:
+        return rank_order[0]
 
 
 def get_bottom_card(jira, status):
     # Get top card
-    rank_order = jira.search_issues('project = CSI AND status = "'+status+'" ORDER BY cf[10000] ASC')
+    rank_order = jira.search_issues('project = SVC AND status = "'+status+'" ORDER BY cf[10000] ASC')
     return rank_order[len(rank_order)-1]
 
 
 
-def move_to_status(jira, list, status):
+def move_to_status(jira, list, status, transition):
 
     if list == []:
         return
@@ -59,7 +63,7 @@ def move_to_status(jira, list, status):
     card = list[0]
     transitions = jira.transitions(card)
     for t in transitions:
-        if (t['name'] == status):
+        if (t['name'] == transition):
             trans_id = t['id']
             break
 
@@ -67,8 +71,9 @@ def move_to_status(jira, list, status):
         jira.transition_issue(card, trans_id)
         logging.info("Moved: " + str(card) + " to " + status)
         print "Moved: " + str(card) + " to " + status
-        # Rank to top of column
-        jira.rank(card.key, top_card.key)
+        if top_card is not None:
+            # Rank to top of column
+            jira.rank(card.key, top_card.key)
 
 
 
@@ -117,7 +122,7 @@ def unblock_cards(jira, list):
 
 def flag_blocked_cards(jira):
     review_complete = jira.search_issues(
-        'project = CSI AND status = "'+final_status+'" AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446) ) and Flagged = null ORDER BY key ASC, summary ASC',
+        'project = SVC AND status = "'+final_status+'" AND Flagged = null ORDER BY key ASC, summary ASC',
         maxResults=250)
 
     bottom_card = get_bottom_card(jira, final_status)
@@ -153,13 +158,13 @@ jira = connect_jira('https://jira.youngliving.com/', user, password)
 
 
 # Get list of cards read to move to ready to test
-review_complete = jira.search_issues('project = CSI AND status = "Review Complete" ORDER BY key ASC, summary ASC', maxResults=250) #AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025))
+review_complete = jira.search_issues('project = SVC AND status = "Review Complete" ORDER BY key ASC, summary ASC', maxResults=250) #AND ("Epic Link" = null or "Epic Link" in (CSI-902, CSI-1025, CSI-1143, CSI-1446, CSI-1155, CSI-1025))
 
 # Move each card to Ready for Test and put at top of column
-move_to_status(jira, review_complete, final_status)
+move_to_status(jira, review_complete, final_status, final_transition)
 
 # Check all links the moved cards blocked and see if any can be unblocked
-blocked_list = jira.search_issues('project = CSI AND Flagged = Impediment ORDER BY key ASC', maxResults=250)
+blocked_list = jira.search_issues('project = SVC AND Flagged = Impediment ORDER BY key ASC', maxResults=250)
 unblock_cards(jira, blocked_list)
 flag_blocked_cards(jira)
 
